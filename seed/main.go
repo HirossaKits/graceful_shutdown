@@ -57,24 +57,24 @@ func (s *seeder) initDB() {
 	path := filepath.Join(dir, "seed", "init.sql")
 	c, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatalf("failed to open init file: %v", err)
+		log.Fatalf("failed to open init file: %v\n", err)
 	}
 
 	tx, err := s.db.Begin()
 	if err != nil {
-		log.Fatalf("failed to begin Tx: %v", err)
+		log.Fatalf("failed to begin Tx: %v\n", err)
 	}
 
 	_, err = s.db.Exec(string(c))
 	if err != nil {
-		fmt.Printf("failed to exec query: %v", err)
+		fmt.Printf("failed to exec query: %v\n", err)
 		if err := tx.Rollback(); err != nil {
-			log.Fatalf("failed to rollback DB: %v", err)
+			log.Fatalf("failed to rollback DB: %v\n", err)
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Fatalf("failed to commit DB: %v", err)
+		log.Fatalf("failed to commit DB: %v\n", err)
 	}
 }
 
@@ -83,7 +83,7 @@ func (s *seeder) seedDB() {
 	path := filepath.Join(dir, "seed", "seed.sql")
 	f, err := os.Open(path)
 	if err != nil {
-		log.Fatalf("failed to open seed file: %v", err)
+		log.Fatalf("failed to open seed file: %v\n", err)
 	}
 	defer f.Close()
 
@@ -91,7 +91,7 @@ func (s *seeder) seedDB() {
 
 	tx, err := s.db.Begin()
 	if err != nil {
-		log.Fatalf("failed to begin Tx: %v", err)
+		log.Fatalf("failed to begin Tx: %v\n", err)
 	}
 
 	for scanner.Scan() {
@@ -101,15 +101,20 @@ func (s *seeder) seedDB() {
 		if i := indexOf(bs, ';'); -1 < i {
 			buf = append(buf, bs[:i]...)
 
+			ch := make(chan error)
 			go func() {
-				_, err = s.db.Exec(string(buf))
+				result, err := s.db.Exec(string(buf))
+				ch <- err
+				fmt.Println(result)
 				if err != nil {
-					fmt.Printf("failed to exec query: %v", err)
+					fmt.Printf("failed to exec query: %v\n", err)
 					if err := tx.Rollback(); err != nil {
-						log.Fatalf("failed to rollback DB: %v", err)
+						log.Fatalf("failed to rollback DB: %v\n", err)
 					}
 				}
 			}()
+
+			<-ch
 
 			buf = bs[i+1:]
 		} else {
@@ -118,7 +123,7 @@ func (s *seeder) seedDB() {
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Fatalf("failed to commit DB: %v", err)
+		log.Fatalf("failed to commit DB: %v\n", err)
 	}
 }
 
