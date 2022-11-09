@@ -103,9 +103,8 @@ func (s *seeder) seedDB() {
 
 			ch := make(chan error)
 			go func() {
-				result, err := s.db.Exec(string(buf))
+				_, err := s.db.Exec(string(buf))
 				ch <- err
-				fmt.Println(result)
 				if err != nil {
 					fmt.Printf("failed to exec query: %v\n", err)
 					if err := tx.Rollback(); err != nil {
