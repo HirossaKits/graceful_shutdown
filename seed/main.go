@@ -24,7 +24,7 @@ func NewSeeder() *seeder {
 
 func main() {
 	seeder := NewSeeder()
-	// seeder.initDB()
+	seeder.initDB()
 	seeder.seedDB()
 	defer seeder.db.Close()
 }
